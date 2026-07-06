@@ -11,19 +11,19 @@ def llm_response(message,avatar_session:'BaseAvatar',datainfo:dict={}):
         start = time.perf_counter()
         from openai import OpenAI
         client = OpenAI(
-            # 如果您没有配置环境变量，请在此处用您的API Key进行替换
+            # If you have not configured the environment variable, replace this with your API key
             api_key=os.getenv("DASHSCOPE_API_KEY"),
-            # 填写DashScope SDK的base_url
+            # base_url for the DashScope SDK
             base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
         )
         end = time.perf_counter()
         logger.info(f"llm Time init: {end-start}s,{message}")
         completion = client.chat.completions.create(
             model="qwen-plus",
-            messages=[{'role': 'system', 'content': '你是一个知识助手，尽量以简短、口语化的方式输出'},
+            messages=[{'role': 'system', 'content': 'You are a knowledgeable assistant. Keep your responses short and conversational.'},
                     {'role': 'user', 'content': message}],
             stream=True,
-            # 通过以下设置，在流式输出的最后一行展示token使用信息
+            # With the following setting, token usage info is shown in the last line of the streamed output
             stream_options={"include_usage": True}
         )
         result=""

@@ -15,8 +15,8 @@
 #  limitations under the License.
 ###############################################################################
 #
-#  Whisper 音频特征提取 — 用于 MuseTalk
-#  迁移自 museasr.py
+#  Whisper audio feature extraction — used by MuseTalk
+#  Migrated from museasr.py
 #
 
 import time
@@ -35,10 +35,10 @@ class WhisperASR(BaseASR):
     def _feature2chunks(self,feature_array,batch_size,audio_feat_win=[8,8],start=0,feature_idx_multiplier=1.0):
         """
         :param feature_array: 
-        :param batch_size: batch大小
-        :param audio_feat_win: 音频特征窗口大小，通常为 [左侧窗口大小, 右侧窗口大小]，单位为视频帧数
-        :param start: 起始帧索引，通常为 stride_left_size/2
-        :param feature_idx_multiplier: 用于将视频帧索引转换为特征索引的乘数，通常为 (特征提取的宽度 / 视频帧率)
+        :param batch_size: Batch size
+        :param audio_feat_win: Audio feature window size, typically [left window size, right window size], in video frames
+        :param start: Starting frame index, typically stride_left_size/2
+        :param feature_idx_multiplier: Multiplier to convert a video frame index to a feature index, typically (feature extraction width / video frame rate)
         :return: 
         """
         feature_chunks = []

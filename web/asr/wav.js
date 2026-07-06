@@ -1,19 +1,19 @@
 /*
-wav编码器+编码引擎
+wav encoder + encoding engine
 https://github.com/xiangyuecn/Recorder
 
-当然最佳推荐使用mp3、wav格式，代码也是优先照顾这两种格式
-浏览器支持情况
+mp3 and wav are of course the most recommended formats, and the code prioritizes these two formats.
+Browser support:
 https://developer.mozilla.org/en-US/docs/Web/HTML/Supported_media_formats
 
-编码原理：给pcm数据加上一个44直接的wav头即成wav文件；pcm数据就是Recorder中的buffers原始数据（重新采样），16位时为LE小端模式（Little Endian），实质上是未经过任何编码处理
+Encoding principle: prepending a 44-byte wav header to the pcm data produces a wav file; the pcm data is the raw buffers data from Recorder (resampled), LE (Little Endian) mode at 16 bits — essentially not encoded at all.
 */
 (function(){
 "use strict";
 
 Recorder.prototype.enc_wav={
 	stable:true
-	,testmsg:"支持位数8位、16位（填在比特率里面），采样率取值无限制"
+	,testmsg:"Supports 8-bit and 16-bit sample depth (set via bitRate); any sample rate value is allowed"
 };
 Recorder.prototype.wav=function(res,True,False){
 		var This=this,set=This.set
@@ -21,7 +21,7 @@ Recorder.prototype.wav=function(res,True,False){
 			,sampleRate=set.sampleRate
 			,bitRate=set.bitRate==8?8:16;
 		
-		//编码数据 https://github.com/mattdiamond/Recorderjs https://www.cnblogs.com/blqw/p/3782420.html https://www.cnblogs.com/xiaoqi/p/6993912.html
+		//encode data https://github.com/mattdiamond/Recorderjs https://www.cnblogs.com/blqw/p/3782420.html https://www.cnblogs.com/xiaoqi/p/6993912.html
 		var dataLength=size*(bitRate/8);
 		var buffer=new ArrayBuffer(44+dataLength);
 		var data=new DataView(buffer);
@@ -58,19 +58,19 @@ Recorder.prototype.wav=function(res,True,False){
 		/* sample rate */
 		write32(sampleRate);
 		/* byte rate (sample rate * block align) */
-		write32(sampleRate*(bitRate/8));// *1 声道
+		write32(sampleRate*(bitRate/8));// *1 channel
 		/* block align (channel count * bytes per sample) */
-		write16(bitRate/8);// *1 声道
+		write16(bitRate/8);// *1 channel
 		/* bits per sample */
 		write16(bitRate);
 		/* data chunk identifier */
 		writeString('data');
 		/* data chunk length */
 		write32(dataLength);
-		// 写入采样数据
+		// write sample data
 		if(bitRate==8) {
 			for(var i=0;i<size;i++,offset++) {
-				//16转8据说是雷霄骅的 https://blog.csdn.net/sevennight1989/article/details/85376149 细节比blqw的按比例的算法清晰点，虽然都有明显杂音
+				//16-to-8-bit conversion, reportedly by Lei Xiaohua https://blog.csdn.net/sevennight1989/article/details/85376149 the details are a bit clearer than blqw's proportional algorithm, though both have noticeable noise
 				var val=(res[i]>>8)+128;
 				data.setInt8(offset,val,true);
 			};

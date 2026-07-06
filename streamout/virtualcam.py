@@ -1,5 +1,5 @@
 ###############################################################################
-#  Output — 虚拟摄像头输出
+#  Output — Virtual camera output
 ###############################################################################
 
 import numpy as np
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 @register("streamout", "virtualcam")
 class VirtualCamOutput(BaseOutput):
-    """虚拟摄像头输出模式 — 通过 pyvirtualcam 输出到虚拟摄像头"""
+    """Virtual camera output mode — outputs to a virtual camera via pyvirtualcam"""
 
     def __init__(self, opt=None, parent: Optional['BaseAvatar'] = None, **kwargs):
         super().__init__(opt, parent)
@@ -31,7 +31,7 @@ class VirtualCamOutput(BaseOutput):
         import pyaudio
         p = pyaudio.PyAudio()
 
-        # 使用用户指定的设备索引，或自动选择默认设备
+        # Use the user-specified device index, or automatically pick the default device
         if self.audio_output_device is not None:
             output_device_index = self.audio_output_device
             try:
@@ -41,13 +41,13 @@ class VirtualCamOutput(BaseOutput):
                 logger.warning(f"[VirtualCam Audio] Device index {output_device_index} not found, using default")
                 output_device_index = None
         else:
-            # 获取默认输出设备
+            # Get the default output device
             try:
                 default_output_info = p.get_default_output_device_info()
                 output_device_index = default_output_info['index']
                 logger.info(f"[VirtualCam Audio] Using default output device: {default_output_info['name']} (index {output_device_index})")
             except:
-                # 如果无法获取默认设备，使用 None 让 PyAudio 自动选择
+                # If the default device cannot be determined, use None so PyAudio picks automatically
                 output_device_index = None
                 logger.warning("[VirtualCam Audio] Cannot get default output device, using system default")
 
@@ -70,10 +70,10 @@ class VirtualCamOutput(BaseOutput):
         p.terminate()
 
     def start(self) -> None:
-        """启动虚拟摄像头音频线程，视频流延迟到第一帧接收时初始化"""
+        """Start the virtual camera audio thread; video stream initialization is deferred until the first frame arrives"""
         try:
             import pyvirtualcam
-            # 仅仅验证包是否安装，延迟实例化 Camera
+            # Only verify the package is installed; defer Camera instantiation
             
             # Start PyAudio playback thread
             import queue
@@ -98,7 +98,7 @@ class VirtualCamOutput(BaseOutput):
                 )
                 logger.info(f"VirtualCam output started: {self._cam.device} with resolution {self.width}x{self.height}")
 
-            # pyvirtualcam 需要 RGB 格式，而 cv2 渲染的是 BGR 格式，需要转换
+            # pyvirtualcam expects RGB format, but cv2 renders BGR, so conversion is needed
             import cv2
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             self._cam.send(frame_rgb)

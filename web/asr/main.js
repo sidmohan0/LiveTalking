@@ -5,11 +5,11 @@
 /* 2022-2023 by zhaoming,mali aihealthx.com */
 
 
-// 连接; 定义socket连接类对象与语音对象
+// Connection; create the socket connection object and audio object
 var wsconnecter = new WebSocketConnectMethod({msgHandle:getJsonMessage,stateHandle:getConnState});
 var audioBlob;
 
-// 录音; 定义录音对象,wav格式
+// Recording; create the recorder object, wav format
 var rec = Recorder({
 	type:"pcm",
 	bitRate:16,
@@ -21,7 +21,7 @@ var rec = Recorder({
  
  
 var sampleBuf=new Int16Array();
-// 定义按钮响应事件
+// Set up button event handlers
 var btnStart = document.getElementById('btnStart');
 btnStart.onclick = record;
 var btnStop = document.getElementById('btnStop');
@@ -68,7 +68,7 @@ function addresschange()
 {   
 	
     var Uri = document.getElementById('wssip').value; 
-	document.getElementById('info_wslink').innerHTML="点此处手工授权（IOS手机）";
+	document.getElementById('info_wslink').innerHTML="Click here to manually authorize (iOS phones)";
 	Uri=Uri.replace(/wss/g,"https");
 	console.log("addresschange uri=",Uri);
 	
@@ -88,7 +88,7 @@ upfile.onclick=function()
 
 // from https://github.com/xiangyuecn/Recorder/tree/master
 var readWavInfo=function(bytes){
-	//读取wav文件头，统一成44字节的头
+	//read the wav file header and normalize it into a 44-byte header
 	if(bytes.byteLength<44){
 		return null;
 	};
@@ -105,12 +105,12 @@ var readWavInfo=function(bytes){
 	if(eq(0,"RIFF")&&eq(8,"WAVEfmt ")){
  
 		var numCh=wavView[22];
-		if(wavView[20]==1 && (numCh==1||numCh==2)){//raw pcm 单或双声道
+		if(wavView[20]==1 && (numCh==1||numCh==2)){//raw pcm, mono or stereo
 			var sampleRate=wavView[24]+(wavView[25]<<8)+(wavView[26]<<16)+(wavView[27]<<24);
 			var bitRate=wavView[34]+(wavView[35]<<8);
-			var heads=[wavView.subarray(0,12)],headSize=12;//head只保留必要的块
-			//搜索data块的位置
-			var dataPos=0; // 44 或有更多块
+			var heads=[wavView.subarray(0,12)],headSize=12;//keep only the necessary chunks in the head
+			//search for the position of the data chunk
+			var dataPos=0; // 44, or there may be more chunks
 			for(var i=12,iL=wavView.length-8;i<iL;){
 				if(wavView[i]==100&&wavView[i+1]==97&&wavView[i+2]==116&&wavView[i+3]==97){//eq(i,"data")
 					heads.push(wavView.subarray(i,i+8));
@@ -159,7 +159,7 @@ upfile.onchange = function () {
 				 file_data_array=audioblob;
  
                   
-                 info_div.innerHTML='请点击连接进行识别';
+                 info_div.innerHTML='Please click Connect to start recognition';
  
                 }
 
@@ -228,7 +228,7 @@ function on_recoder_mode_change()
 {
             var item = null;
             var obj = document.getElementsByName("recoder_mode");
-            for (var i = 0; i < obj.length; i++) { //遍历Radio 
+            for (var i = 0; i < obj.length; i++) { //iterate over radio buttons
                 if (obj[i].checked) {
                     item = obj[i].value;  
 					break;
@@ -256,7 +256,7 @@ function on_recoder_mode_change()
 		        btnStop.disabled = true;
 		        btnConnect.disabled=true;
 			    isfilemode=true;
-				info_div.innerHTML='请点击选择文件';
+				info_div.innerHTML='Please click to select a file';
 			    
 	 
 			}
@@ -296,7 +296,7 @@ function getAsrMode(){
 
             var item = null;
             var obj = document.getElementsByName("asr_mode");
-            for (var i = 0; i < obj.length; i++) { //遍历Radio 
+            for (var i = 0; i < obj.length; i++) { //iterate over radio buttons
                 if (obj[i].checked) {
                     item = obj[i].value;  
 					break;
@@ -367,8 +367,8 @@ async function is_speaking() {
 }
 
 async function waitSpeakingEnd() {
-	rec.stop() //关闭录音
-	for(let i=0;i<10;i++) {  //等待数字人开始讲话，最长等待10s
+	rec.stop() //stop recording
+	for(let i=0;i<10;i++) {  //wait for the avatar to start speaking, up to 10s
 		bspeak = await is_speaking()
 		if(bspeak) {
 			break
@@ -376,7 +376,7 @@ async function waitSpeakingEnd() {
 		await sleep(1000)
 	}
 
-	while(true) {  //等待数字人讲话结束
+	while(true) {  //wait for the avatar to finish speaking
 		bspeak = await is_speaking()
 		if(!bspeak) {
 			break
@@ -386,7 +386,7 @@ async function waitSpeakingEnd() {
 	await sleep(2000)
 	rec.start() 
 }
-// 语音识别结果; 对jsonMsg数据解析,将识别结果附加到编辑框中
+// Speech recognition result; parse the jsonMsg data and append the result to the text box
 function getJsonMessage( jsonMsg ) {
 	//console.log(jsonMsg);
 	console.log( "message: " + JSON.parse(jsonMsg.data)['text'] );
@@ -426,8 +426,8 @@ function getJsonMessage( jsonMsg ) {
 		play_file();
 		wsconnecter.wsStop();
         
-		info_div.innerHTML="请点击连接";
- 
+		info_div.innerHTML="Please click Connect";
+
 		btnStart.disabled = true;
 		btnStop.disabled = true;
 		btnConnect.disabled=false;
@@ -437,14 +437,14 @@ function getJsonMessage( jsonMsg ) {
  
 }
 
-// 连接状态响应
+// Connection state handling
 function getConnState( connState ) {
 	if ( connState === 0 ) { //on open
  
  
-		info_div.innerHTML='连接成功!请点击开始';
+		info_div.innerHTML='Connected! Please click Start';
 		if (isfilemode==true){
-			info_div.innerHTML='请耐心等待,大文件等待时间更长';
+			info_div.innerHTML='Please be patient; large files take longer';
 			start_file_send();
 		}
 		else
@@ -459,13 +459,13 @@ function getConnState( connState ) {
 		stop();
 		console.log( 'connecttion error' );
 		 
-		alert("连接地址"+document.getElementById('wssip').value+"失败,请检查asr地址和端口。或试试界面上手动授权，再连接。");
+		alert("Failed to connect to "+document.getElementById('wssip').value+". Please check the ASR address and port, or try manual authorization on the page and then connect again.");
 		btnStart.disabled = true;
 		btnStop.disabled = true;
 		btnConnect.disabled=false;
  
  
-		info_div.innerHTML='请点击连接';
+		info_div.innerHTML='Please click Connect';
 	}
 }
 
@@ -474,7 +474,7 @@ function record()
  
 		 rec.open( function(){
 		 rec.start();
-		 console.log("开始");
+		 console.log("start");
 			btnStart.disabled = true;
 			btnStop.disabled = false;
 			btnConnect.disabled=true;
@@ -484,19 +484,19 @@ function record()
 
  
 
-// 识别启动、停止、清空操作
+// Recognition start, stop, and clear operations
 function start() {
-	
-	// 清除显示
+
+	// clear the display
 	clear();
-	//控件状态更新
+	//update control states
  	console.log("isfilemode"+isfilemode);
-    
-	//启动连接
+
+	//start the connection
 	var ret=wsconnecter.wsStart();
 	// 1 is ok, 0 is error
 	if(ret==1){
-		info_div.innerHTML="正在连接asr服务器，请等待...";
+		info_div.innerHTML="Connecting to the ASR server, please wait...";
 		isRec = true;
 		btnStart.disabled = true;
 		btnStop.disabled = true;
@@ -506,7 +506,7 @@ function start() {
 	}
 	else
 	{
-		info_div.innerHTML="请点击开始";
+		info_div.innerHTML="Please click Start";
 		btnStart.disabled = true;
 		btnStop.disabled = true;
 		btnConnect.disabled=false;
@@ -538,10 +538,10 @@ function stop() {
 	 
 
  
-	// 控件状态更新
-	
+	// update control states
+
 	isRec = false;
-    info_div.innerHTML="发送完数据,请等候,正在识别...";
+    info_div.innerHTML="Data sent; please wait, recognition in progress...";
 
    if(isfilemode==false){
 	    btnStop.disabled = true;
@@ -552,7 +552,7 @@ function stop() {
 		console.log("call stop ws!");
 		wsconnecter.wsStop();
 		btnConnect.disabled=false;
-		info_div.innerHTML="请点击连接";}, 3000 );
+		info_div.innerHTML="Please click Connect";}, 3000 );
  
  
 	   
@@ -579,7 +579,7 @@ function stop() {
 		console.log("errMsg: " + errMsg);
 	});
    }
-    // 停止连接
+    // stop the connection
  
     
 

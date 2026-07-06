@@ -1,17 +1,17 @@
 /*
-pcm编码器+编码引擎
+pcm encoder + encoding engine
 https://github.com/xiangyuecn/Recorder
 
-编码原理：本编码器输出的pcm格式数据其实就是Recorder中的buffers原始数据（经过了重新采样），16位时为LE小端模式（Little Endian），并未经过任何编码处理
+Encoding principle: the pcm data output by this encoder is actually the raw buffers data from Recorder (resampled), LE (Little Endian) mode at 16 bits, without any encoding applied.
 
-编码的代码和wav.js区别不大，pcm加上一个44字节wav头即成wav文件；所以要播放pcm就很简单了，直接转成wav文件来播放，已提供转换函数 Recorder.pcm2wav
+The encoding code differs little from wav.js; prepending a 44-byte wav header to the pcm produces a wav file. So playing pcm is simple: just convert it to a wav file for playback — the conversion function Recorder.pcm2wav is provided.
 */
 (function(){
 "use strict";
 
 Recorder.prototype.enc_pcm={
 	stable:true
-	,testmsg:"pcm为未封装的原始音频数据，pcm数据文件无法直接播放；支持位数8位、16位（填在比特率里面），采样率取值无限制"
+	,testmsg:"pcm is raw, uncontainerized audio data; pcm data files cannot be played directly. Supports 8-bit and 16-bit sample depth (set via bitRate); any sample rate value is allowed"
 };
 Recorder.prototype.pcm=function(res,True,False){
 		var This=this,set=This.set
@@ -22,10 +22,10 @@ Recorder.prototype.pcm=function(res,True,False){
 		var data=new DataView(buffer);
 		var offset=0;
 		
-		// 写入采样数据
+		// write sample data
 		if(bitRate==8) {
 			for(var i=0;i<size;i++,offset++) {
-				//16转8据说是雷霄骅的 https://blog.csdn.net/sevennight1989/article/details/85376149 细节比blqw的按比例的算法清晰点，虽然都有明显杂音
+				//16-to-8-bit conversion, reportedly by Lei Xiaohua https://blog.csdn.net/sevennight1989/article/details/85376149 the details are a bit clearer than blqw's proportional algorithm, though both have noticeable noise
 				var val=(res[i]>>8)+128;
 				data.setInt8(offset,val,true);
 			};
@@ -43,26 +43,26 @@ Recorder.prototype.pcm=function(res,True,False){
 
 
 
-/**pcm直接转码成wav，可以直接用来播放；需同时引入wav.js
+/**Transcode pcm directly into wav, which can be played directly; wav.js must also be included
 data: {
-		sampleRate:16000 pcm的采样率
-		bitRate:16 pcm的位数 取值：8 或 16
-		blob:blob对象
+		sampleRate:16000 sample rate of the pcm
+		bitRate:16 bit depth of the pcm; allowed values: 8 or 16
+		blob:blob object
 	}
-	data如果直接提供的blob将默认使用16位16khz的配置，仅用于测试
+	If data is provided directly as a blob, the 16-bit 16kHz configuration is used by default; for testing only
 True(wavBlob,duration)
 False(msg)
 **/
 Recorder.pcm2wav=function(data,True,False){
-	if(data.slice && data.type!=null){//Blob 测试用
+	if(data.slice && data.type!=null){//Blob, for testing
 		data={blob:data};
 	};
 	var sampleRate=data.sampleRate||16000,bitRate=data.bitRate||16;
 	if(!data.sampleRate || !data.bitRate){
-		console.warn("pcm2wav必须提供sampleRate和bitRate");
+		console.warn("pcm2wav requires sampleRate and bitRate to be provided");
 	};
 	if(!Recorder.prototype.wav){
-		False("pcm2wav必须先加载wav编码器wav.js");
+		False("pcm2wav requires the wav encoder (wav.js) to be loaded first");
 		return;
 	};
 	
@@ -70,7 +70,7 @@ Recorder.pcm2wav=function(data,True,False){
 	reader.onloadend=function(){
 		var pcm;
 		if(bitRate==8){
-			//8位转成16位
+			//convert 8-bit to 16-bit
 			var u8arr=new Uint8Array(reader.result);
 			pcm=new Int16Array(u8arr.length);
 			for(var j=0;j<u8arr.length;j++){

@@ -1,5 +1,5 @@
 ###############################################################################
-#  配置解析 — CLI 参数 + YAML 配置
+#  Configuration parsing — CLI arguments + YAML config
 ###############################################################################
 
 import argparse
@@ -14,7 +14,7 @@ except ImportError:
 
 
 def str_or_int(value):
-    """尝试转换为 int，失败则返回 str"""
+    """Try converting to int; return str on failure"""
     try:
         return int(value)
     except ValueError:
@@ -22,12 +22,12 @@ def str_or_int(value):
 
 
 def _yaml_to_args(yaml_cfg):
-    """将 YAML 字典中的 key 转换为 argparse 兼容的 `--key` 形式。
+    """Convert keys in the YAML dict into argparse-compatible `--key` form.
 
-    argparse 的 dest 默认规则：`--model` → `model`，`--push-url` → `push_url`。
-    此函数同时支持两种 key 写法：
-      - model / batch_size          → 直接透传
-      - model-name / batch-size    → 转换为 model_name / batch_size
+    argparse default dest rules: `--model` → `model`, `--push-url` → `push_url`.
+    This function supports both key styles:
+      - model / batch_size          → passed through as-is
+      - model-name / batch-size    → converted to model_name / batch_size
     """
     result = {}
     for k, v in yaml_cfg.items():
@@ -37,27 +37,27 @@ def _yaml_to_args(yaml_cfg):
 
 
 def parse_args():
-    """解析命令行参数，支持 YAML 配置文件覆盖默认值。
+    """Parse command line arguments, with defaults optionally overridden by a YAML config file.
 
-    优先级：CLI 参数 > YAML 配置文件 > add_argument(default=...)
+    Priority: CLI arguments > YAML config file > add_argument(default=...)
     """
     parser = argparse.ArgumentParser(description="LiveTalking Digital Human Server")
 
-    # ─── 配置文件 ──────────────────────────────────────────────────────
+    # ─── Config file ──────────────────────────────────────────────────
     parser.add_argument('--config', '-c', type=str, default='config.yaml',
-                        help='YAML 配置文件路径（设为空字符串可跳过）')
+                        help='YAML config file path (set to an empty string to skip)')
 
-    # ─── 音频 ──────────────────────────────────────────────────────────
+    # ─── Audio ─────────────────────────────────────────────────────────
     parser.add_argument('--fps', type=int, default=25, help="video fps, must be 25")
     parser.add_argument('-l', type=int, default=10)
     parser.add_argument('-m', type=int, default=8)
     parser.add_argument('-r', type=int, default=10)
 
-    # ─── 画面 ──────────────────────────────────────────────────────────
+    # ─── Display ───────────────────────────────────────────────────────
     # parser.add_argument('--W', type=int, default=450, help="GUI width")
     # parser.add_argument('--H', type=int, default=450, help="GUI height")
 
-    # ─── 数字人模型 ────────────────────────────────────────────────────
+    # ─── Digital human model ───────────────────────────────────────────
     parser.add_argument('--model', type=str, default='wav2lip',
                         help="avatar model: musetalk/wav2lip/ultralight")
     parser.add_argument('--avatar_id', type=str, default='wav2lip256_avatar1',
@@ -66,7 +66,7 @@ def parse_args():
     parser.add_argument('--modelres', type=int, default=192)
     parser.add_argument('--modelfile', type=str, default='')
 
-    # ─── 自定义动作和多形象 ────────────────────────────────────────────
+    # ─── Custom actions and multiple avatars ───────────────────────────
     parser.add_argument('--customvideo_config', type=str, default='',
                         help="custom action json")
 
@@ -74,11 +74,11 @@ def parse_args():
     parser.add_argument('--tts', type=str, default='edgetts',
                         help="tts plugin: edgetts/gpt-sovits/cosyvoice/fishtts/tencent/doubao/indextts2/azuretts/qwentts")
     parser.add_argument('--REF_FILE', type=str, default="zh-CN-YunxiaNeural",
-                        help="参考文件名或语音模型ID")
+                        help="reference file name or voice model ID")
     parser.add_argument('--REF_TEXT', type=str, default=None)
     parser.add_argument('--TTS_SERVER', type=str, default='http://127.0.0.1:9880')
 
-    # ─── 传输 ─────────────────────────────────────────────────────────
+    # ─── Transport ────────────────────────────────────────────────────
     parser.add_argument('--transport', type=str, default='webrtc',
                         help="output: rtcpush/webrtc/rtmp/virtualcam")
     parser.add_argument('--stun', type=str, default='stun:stun.freeswitch.org:3478',
@@ -89,13 +89,13 @@ def parse_args():
     parser.add_argument('--listenport', type=int, default=8010,
                         help="web listen port")
 
-    # ─── 虚拟摄像头 ───────────────────────────────────────────────────
+    # ─── Virtual camera ───────────────────────────────────────────────
     parser.add_argument('--audio_output_device', type=int, default=None,
-                        help="音频输出设备索引（None=系统默认，仅用于 --transport=virtualcam）。使用 python list_audio_devices.py 查看所有设备")
+                        help="audio output device index (None=system default, only used with --transport=virtualcam). Run python list_audio_devices.py to list all devices")
 
-    # ─── 加载 YAML 配置文件 ────────────────────────────────────────────
+    # ─── Load YAML config file ─────────────────────────────────────────
     if _has_yaml:
-        # 先用 parser 的已知参数做一次临时解析，只拿 --config 的值
+        # Do a temporary parse of known arguments first, just to get the --config value
         tmp_opt, _ = parser.parse_known_args()
         config_path = tmp_opt.config
         if config_path and os.path.exists(config_path):
@@ -105,13 +105,13 @@ def parse_args():
                 yaml_defaults = _yaml_to_args(yaml_cfg)
                 parser.set_defaults(**yaml_defaults)
     else:
-        print("[config] PyYAML 未安装，跳过 YAML 配置文件加载。"
-              "安装: pip install pyyaml")
+        print("[config] PyYAML is not installed; skipping YAML config file loading. "
+              "Install: pip install pyyaml")
 
-    # ─── 正式解析 CLI 参数 ─────────────────────────────────────────────
+    # ─── Final CLI argument parsing ────────────────────────────────────
     opt = parser.parse_args()
 
-    # ─── 后处理 ────────────────────────────────────────────────────────
+    # ─── Post-processing ───────────────────────────────────────────────
     opt.customopt = []
     if opt.customvideo_config:
         with open(opt.customvideo_config, 'r') as f:

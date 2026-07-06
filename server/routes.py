@@ -1,5 +1,5 @@
 ###############################################################################
-#  服务器路由 — 统一异常处理的 API 路由
+#  Server Routes — API routes with unified exception handling
 ###############################################################################
 
 import json
@@ -9,10 +9,10 @@ from aiohttp import web
 from utils.logger import logger
 
 
-# ─── 路由工具函数 ──────────────────────────────────────────────────────────
+# ─── Route helper functions ───────────────────────────────────────────────
 
 def json_ok(data=None):
-    """返回成功 JSON 响应"""
+    """Return a success JSON response"""
     body = {"code": 0, "msg": "ok"}
     if data is not None:
         body["data"] = data
@@ -23,7 +23,7 @@ def json_ok(data=None):
 
 
 def json_error(msg: str, code: int = -1):
-    """返回错误 JSON 响应"""
+    """Return an error JSON response"""
     return web.Response(
         content_type="application/json",
         text=json.dumps({"code": code, "msg": str(msg)}),
@@ -34,14 +34,14 @@ from server.session_manager import session_manager
 from server.avatar_routes import setup_avatar_routes
 
 def get_session(request, sessionid: str):
-    """从 app 中获取 session 实例"""
+    """Get the session instance from the app"""
     return session_manager.get_session(sessionid)
 
 
-# ─── 路由处理函数 ──────────────────────────────────────────────────────────
+# ─── Route handler functions ──────────────────────────────────────────────
 
 async def human(request):
-    """文本输入（echo/chat 模式），支持 voice/emotion 参数"""
+    """Text input (echo/chat mode), supports voice/emotion parameters"""
     try:
         params: dict = await request.json()
 
@@ -54,7 +54,7 @@ async def human(request):
             avatar_session.flush_talk()
 
         datainfo = {}
-        if params.get('tts'):  # tts 参数透传（voice, emotion 等）
+        if params.get('tts'):  # pass tts parameters through (voice, emotion, etc.)
             datainfo['tts'] = params.get('tts')
 
         if params['type'] == 'echo':
@@ -73,7 +73,7 @@ async def human(request):
 
 
 async def interrupt_talk(request):
-    """打断当前说话"""
+    """Interrupt the current speech"""
     try:
         params = await request.json()
         sessionid = params.get('sessionid', '')
@@ -88,7 +88,7 @@ async def interrupt_talk(request):
 
 
 async def humanaudio(request):
-    """上传音频文件"""
+    """Upload an audio file"""
     try:
         form = await request.post()
         sessionid = str(form.get('sessionid', ''))
@@ -108,7 +108,7 @@ async def humanaudio(request):
 
 
 async def set_audiotype(request):
-    """设置自定义状态（动作编排）"""
+    """Set custom state (action choreography)"""
     try:
         params = await request.json()
         sessionid = params.get('sessionid', '')
@@ -123,7 +123,7 @@ async def set_audiotype(request):
 
 
 async def record(request):
-    """录制控制"""
+    """Recording control"""
     try:
         params = await request.json()
         sessionid = params.get('sessionid', '')
@@ -141,7 +141,7 @@ async def record(request):
 
 
 async def is_speaking(request):
-    """查询是否正在说话"""
+    """Query whether the avatar is currently speaking"""
     params = await request.json()
     sessionid = params.get('sessionid', '')
     avatar_session = get_session(request, sessionid)
@@ -151,7 +151,7 @@ async def is_speaking(request):
 
 
 async def admin_config(request):
-    """Admin: 获取全局配置参数"""
+    """Admin: get global configuration parameters"""
     try:
         opt = request.app.get("opt")
         if opt:
@@ -163,7 +163,7 @@ async def admin_config(request):
 
 
 async def admin_sessions(request):
-    """Admin: 获取活跃的会话及其配置"""
+    """Admin: get active sessions and their configuration"""
     try:
         sessions_info = []
         for sid, avatar_session in session_manager.sessions.items():
@@ -190,10 +190,10 @@ async def admin_sessions(request):
         return json_error(str(e))
 
 
-# ─── 路由注册 ──────────────────────────────────────────────────────────────
+# ─── Route registration ───────────────────────────────────────────────────
 
 def setup_routes(app):
-    """注册所有路由到 aiohttp app"""
+    """Register all routes on the aiohttp app"""
     app.router.add_post("/human", human)
     app.router.add_post("/humanaudio", humanaudio)
     app.router.add_post("/set_audiotype", set_audiotype)
@@ -215,7 +215,7 @@ def setup_routes(app):
     except Exception as e:
         logger.warning(f"[ASR] Failed to register ASR endpoint: {e}")
 
-    # 注册 avatar 生成相关的路由
+    # Register avatar-generation-related routes
     setup_avatar_routes(app)
 
     app.router.add_static('/', path='web')

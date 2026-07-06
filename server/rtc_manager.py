@@ -1,5 +1,5 @@
 ###############################################################################
-#  WebRTC 连接管理 + RTC 音频/视频接收
+#  WebRTC connection management + RTC audio/video receiving
 ###############################################################################
 
 import json
@@ -17,7 +17,7 @@ from utils.logger import logger
 
 
 # def _rand_session_id(n: int = 6) -> int:
-#     """生成 N 位随机 session ID"""
+#     """Generate an N-digit random session ID"""
 #     return random.randint(10 ** (n - 1), 10 ** n - 1)
 
 
@@ -26,25 +26,25 @@ from server.session_manager import MaxSessionError
 
 class RTCManager:
     """
-    WebRTC 连接管理器。
-    
-    管理 PeerConnection 生命周期、音视频轨道收发、DataChannel。
+    WebRTC connection manager.
+
+    Manages PeerConnection lifecycle, audio/video track send/receive, and DataChannel.
     """
 
     def __init__(self, opt):
         """
         Args:
-            opt: 全局配置
+            opt: global configuration
         """
         self.opt = opt
         self.pcs: set = set()
 
     async def handle_offer(self, request):
-        """处理 WebRTC offer 信令"""
+        """Handle WebRTC offer signaling"""
         params = await request.json()
         offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
 
-        # 通过 SessionManager 构建（内部会检查 max_session）
+        # Build via SessionManager (max_session is checked internally)
         try:
             sessionid = await session_manager.create_session(params)
         except MaxSessionError as e:
@@ -56,7 +56,7 @@ class RTCManager:
         logger.info('offer sessionid=%s', sessionid)
         avatar_session = session_manager.get_session(sessionid)
 
-        # 创建 PeerConnection
+        # Create the PeerConnection
         ice_server = RTCIceServer(urls=self.opt.stun) #'stun:stun.freeswitch.org:3478'
         pc = RTCPeerConnection(
             configuration=RTCConfiguration(iceServers=[ice_server])
@@ -71,13 +71,13 @@ class RTCManager:
                 self.pcs.discard(pc)
                 session_manager.remove_session(sessionid)
 
-        # 添加发送轨道
+        # Add outgoing tracks
         from server.webrtc import HumanPlayer
         player = HumanPlayer(avatar_session)
         pc.addTrack(player.audio)
         pc.addTrack(player.video)
 
-        # 设置编解码器偏好
+        # Set codec preferences
         capabilities = RTCRtpSender.getCapabilities("video")
         preferences = list(filter(lambda x: x.name == "H264", capabilities.codecs))
         preferences += list(filter(lambda x: x.name == "VP8", capabilities.codecs))
@@ -100,7 +100,7 @@ class RTCManager:
         )
 
     async def handle_rtcpush(self, push_url, sessionid: str):
-        """RTCPush 模式：主动推流"""
+        """RTCPush mode: actively push the stream"""
         import aiohttp
         await session_manager.create_session({}, sessionid)
         avatar_session = session_manager.get_session(sessionid)
@@ -131,7 +131,7 @@ class RTCManager:
         )
 
     async def shutdown(self):
-        """关闭所有 PeerConnection"""
+        """Close all PeerConnections"""
         coros = [pc.close() for pc in self.pcs]
         await asyncio.gather(*coros)
         self.pcs.clear()

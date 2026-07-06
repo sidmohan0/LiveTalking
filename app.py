@@ -68,7 +68,7 @@ global_avatars = {} # avatar_id: payload
 rtc_manager = None
 
 def randN(N)->int:
-    '''生成长度为 N的随机数 '''
+    '''Generate a random number of length N '''
     min = pow(10, N - 1)
     max = pow(10, N)
     return random.randint(min, max - 1)
@@ -79,7 +79,7 @@ def build_avatar_session(sessionid:str, params:dict)->BaseAvatar:
 
     avatar_id = params.get('avatar',opt.avatar_id) 
     opt_this.avatar_id = avatar_id
-    ref_audio = params.get('refaudio','') #音色
+    ref_audio = params.get('refaudio','') # voice timbre
     ref_text = params.get('reftext','')
     if (avatar_id and avatar_id != opt.avatar_id):
         # Avoid reloading if already cached globally
@@ -89,10 +89,10 @@ def build_avatar_session(sessionid:str, params:dict)->BaseAvatar:
     else:
         # Default avatar loaded at startup
         avatar_this = global_avatars.get(opt.avatar_id)
-    if ref_audio: #请求参数配置了参考音频
+    if ref_audio: # reference audio was configured in the request parameters
         opt_this.REF_FILE = ref_audio
         opt_this.REF_TEXT = ref_text
-    custom_config=params.get('custom_config','') #动作编排配置
+    custom_config=params.get('custom_config','') # action choreography configuration
     if custom_config:
         opt_this.customopt = json.loads(custom_config)
 
@@ -120,11 +120,11 @@ async def download_record(request):
 
 def main():
     global rtc_manager, opt, model,load_avatar
-    # 解析命令行参数
+    # Parse command line arguments
     from config import parse_args
     opt = parse_args()
 
-    # ─── 加载 avatar 插件（触发 @register 注册）──────────────────────
+    # ─── Load avatar plugins (triggers @register registration) ───────
     _avatar_modules = {
         'musetalk':   'avatars.musetalk_avatar',
         'wav2lip':    'avatars.wav2lip_avatar',
@@ -156,7 +156,7 @@ def main():
     rtc_manager = RTCManager(opt)
     # share avatar_sessions (RTCManager handles it but routes.py expects it)
 
-    # 虚拟摄像头或 RTMP 模式：启动后台渲染线程
+    # Virtual camera or RTMP mode: start the background render thread
     if opt.transport == 'virtualcam' or opt.transport == 'rtmp':
         thread_quit = Event()
         params = {}
@@ -177,7 +177,7 @@ def main():
     appasync.router.add_post("/offer", offer)
     appasync.router.add_get("/record/{sessionid}", download_record)
     
-    # 注册 server/routes.py 中的通用 API 路由
+    # Register the common API routes from server/routes.py
     setup_routes(appasync) 
 
     # Configure default CORS settings.
@@ -198,7 +198,7 @@ def main():
     elif opt.transport=='rtcpush':
         pagename='rtcpushapi.html'
     logger.info('start http server; http://<serverip>:'+str(opt.listenport)+'/'+pagename)
-    # logger.info('如果使用webrtc，推荐访问webrtc集成前端: http://<serverip>:'+str(opt.listenport)+'/dashboard.html')
+    # logger.info('If using webrtc, the integrated webrtc frontend is recommended: http://<serverip>:'+str(opt.listenport)+'/dashboard.html')
     def run_server(runner):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

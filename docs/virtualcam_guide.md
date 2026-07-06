@@ -1,262 +1,262 @@
-# 虚拟摄像头功能完整指南
+# Virtual Camera Complete Guide
 
-## 快速开始
+## Quick Start
 
-### 1. 启动服务
+### 1. Start the Server
 
 ```bash
 python app.py --transport virtualcam --model wav2lip --avatar_id wav2lip256_avatar1
 ```
 
-**OBS Studio**: 添加视频捕获设备 → OBS Virtual Camera
+**OBS Studio**: Add a Video Capture Device → OBS Virtual Camera
 
-需要下载并启动OBS Studio
+You need to download and launch OBS Studio.
 
-### 2. 打开控制页面
+### 2. Open the Control Page
 
-浏览器访问：**http://localhost:8010/virtualcam.html**
+Visit in your browser: **http://localhost:8010/virtualcam.html**
 
-### 3. 控制数字人
+### 3. Control the Digital Human
 
-- 输入文本，点击"发送文本"让数字人说话
-- 点击"打断播放"停止当前说话
-- 或使用快捷键：`Ctrl+Enter` 发送，`Escape` 打断
+- Enter text and click "Send Text" to make the digital human speak
+- Click "Interrupt Playback" to stop the current speech
+- Or use keyboard shortcuts: `Ctrl+Enter` to send, `Escape` to interrupt
 
-### 4. 在其他应用中使用
+### 4. Use in Other Applications
 
-- **Zoom/Teams**: 选择摄像头"OBS Virtual Camera"
-- 在腾讯会议中按照如下使用新建的虚拟摄像头：
+- **Zoom/Teams**: Select the camera "OBS Virtual Camera"
+- In Tencent Meeting, use the newly created virtual camera as shown below:
 
 ![1782554830929](image/virtualcam_guide/1782554830929.png)
 
 ---
 
-## 功能概述
+## Feature Overview
 
-### 主要特性
+### Key Features
 
-✅ 后台渲染 - 不依赖浏览器页面  
-✅ 自动音频设备 - 自动检测系统默认扬声器  
-✅ 颜色修复 - 自动转换 BGR 到 RGB  
-✅ Web 控制台 - 完整的 HTTP API 和页面控制  
-✅ 实时监控 - 说话状态、设备信息实时显示  
+✅ Background rendering - does not depend on a browser page  
+✅ Automatic audio device - auto-detects the system default speaker  
+✅ Color correction - automatically converts BGR to RGB  
+✅ Web console - full HTTP API and page-based control  
+✅ Real-time monitoring - live display of speaking status and device info  
 
-### 运行模式
+### Run Modes
 
-| 模式       | 命令                       | 说明                                |
-| ---------- | -------------------------- | ----------------------------------- |
-| 虚拟摄像头 | `--transport virtualcam` | 后台运行，推流到 OBS Virtual Camera |
-| WebRTC     | `--transport webrtc`     | 传统模式，浏览器访问                |
+| Mode           | Command                    | Description                                  |
+| -------------- | -------------------------- | -------------------------------------------- |
+| Virtual Camera | `--transport virtualcam` | Runs in the background, streams to OBS Virtual Camera |
+| WebRTC         | `--transport webrtc`     | Traditional mode, accessed via browser       |
 
 ---
 
 
-## 使用指南
+## Usage Guide
 
-### OBS Studio 安装和配置
+### OBS Studio Installation and Setup
 
-#### OBS 与 pyvirtualcam 的关系
+#### The Relationship Between OBS and pyvirtualcam
 
-- **OBS Studio**: 提供虚拟摄像头设备驱动
-- **pyvirtualcam**: Python 库，向虚拟摄像头推送视频流
-- **Zoom/Teams/腾讯会议**: 从虚拟摄像头读取画面
+- **OBS Studio**: Provides the virtual camera device driver
+- **pyvirtualcam**: Python library that pushes the video stream to the virtual camera
+- **Zoom/Teams/Tencent Meeting**: Read frames from the virtual camera
 
-**工作流程**: OBS 创建设备 → pyvirtualcam 推流 → 其他应用读取
+**Workflow**: OBS creates the device → pyvirtualcam streams to it → other applications read from it
 
-#### 安装步骤
+#### Installation Steps
 
-1. **下载并安装 OBS Studio**
+1. **Download and install OBS Studio**
 
-   - 官网: https://obsproject.com/
-2. **首次使用必须启动 OBS Studio 一次**
+   - Official site: https://obsproject.com/
+2. **You must launch OBS Studio once before first use**
 
-   - 打开 OBS Studio（首次）
-   - 这会激活虚拟摄像头设备
-   - 关闭 OBS（设备已注册到系统）
-3. **验证虚拟摄像头已注册**
+   - Open OBS Studio (first time)
+   - This activates the virtual camera device
+   - Close OBS (the device is now registered with the system)
+3. **Verify the virtual camera is registered**
 
    ```python
    import pyvirtualcam
 
    try:
        cam = pyvirtualcam.Camera(width=640, height=480, fps=30)
-       print(f"成功: {cam.device}")  # 应输出: OBS Virtual Camera
+       print(f"Success: {cam.device}")  # Should print: OBS Virtual Camera
        cam.close()
    except Exception as e:
-       print(f"失败: {e}")
+       print(f"Failed: {e}")
    ```
 
-**重要提示**:
+**Important notes**:
 
-- ✅ 首次使用需要启动 OBS 一次
-- ✅ 之后无需打开 OBS，设备自动可用
-- ✅ 系统重启后设备仍然存在
+- ✅ OBS must be launched once before first use
+- ✅ After that, OBS does not need to be open; the device is available automatically
+- ✅ The device persists across system reboots
 
-### 前置要求
+### Prerequisites
 
 ```bash
-# 安装 OBS Studio 后安装 Python 依赖
+# After installing OBS Studio, install the Python dependencies
 pip install pyvirtualcam pyaudio
 ```
 
-### 基本使用
+### Basic Usage
 
-#### 自动音频设备（推荐）
+#### Automatic Audio Device (Recommended)
 
 ```bash
 python app.py --transport virtualcam --model wav2lip --avatar_id wav2lip256_avatar1
 ```
 
-#### 手动指定音频设备
+#### Manually Specify an Audio Device
 
 ```bash
-# 1. 查看音频设备列表
+# 1. List the audio devices
 python list_audio_devices.py
 
-# 2. 使用指定设备索引
+# 2. Use a specific device index
 python app.py --transport virtualcam --audio_output_device 25
 ```
 
-#### 使用 YAML 配置
+#### Using a YAML Configuration
 
 ```yaml
 # config.yaml
 transport: virtualcam
 model: wav2lip
 avatar_id: wav2lip256_avatar1
-audio_output_device: 25  # 可选
+audio_output_device: 25  # optional
 ```
 
 ```bash
-python app.py  # 自动加载 config.yaml
+python app.py  # config.yaml is loaded automatically
 ```
 
 ---
 
-## 控制页面功能
+## Control Page Features
 
-访问：**http://localhost:8010/virtualcam.html**
+Visit: **http://localhost:8010/virtualcam.html**
 
-### 功能模块
+### Feature Modules
 
-| 模块               | 功能                                        |
-| ------------------ | ------------------------------------------- |
-| **状态显示** | 实时说话状态、虚拟摄像头信息、音频设备信息  |
-| **语音输出** | 文本输入、发送文本、打断播放、快捷短语      |
-| **运行配置** | 只读显示当前运行参数（Avatar、TTS、音色等） |
-| **历史记录** | 保存最近 20 条发送记录，点击重播            |
+| Module               | Function                                                        |
+| -------------------- | --------------------------------------------------------------- |
+| **Status Display**   | Live speaking status, virtual camera info, audio device info    |
+| **Voice Output**     | Text input, send text, interrupt playback, quick phrases        |
+| **Runtime Config**   | Read-only display of current runtime parameters (avatar, TTS, voice, etc.) |
+| **History**          | Keeps the last 20 sent entries; click to replay                 |
 
-### 键盘快捷键
+### Keyboard Shortcuts
 
-| 快捷键           | 功能     |
-| ---------------- | -------- |
-| `Ctrl + Enter` | 发送文本 |
-| `Escape`       | 打断播放 |
+| Shortcut         | Function            |
+| ---------------- | ------------------- |
+| `Ctrl + Enter` | Send text           |
+| `Escape`       | Interrupt playback  |
 
 ### HTTP API
 
 ```bash
-# 发送文本
+# Send text
 curl -X POST http://localhost:8010/human \
   -H "Content-Type: application/json" \
-  -d '{"sessionid":"0","type":"echo","text":"你好"}'
+  -d '{"sessionid":"0","type":"echo","text":"Hello"}'
 
-# 打断说话
+# Interrupt speech
 curl -X POST http://localhost:8010/interrupt_talk \
   -H "Content-Type: application/json" \
   -d '{"sessionid":"0"}'
 
-# 查询状态
+# Query status
 curl -X POST http://localhost:8010/is_speaking \
   -H "Content-Type: application/json" \
   -d '{"sessionid":"0"}'
 
-# 获取完整配置
+# Get full configuration
 curl http://localhost:8010/api/virtualcam/status
 ```
 
 ---
 
-## 音频设备配置
+## Audio Device Configuration
 
-### 查看设备列表
+### List Devices
 
 ```bash
 python list_audio_devices.py
 ```
 
-输出示例：
+Example output:
 
 ```
 [Output Devices]:
 
 Device Index: 5
-  Name: 扬声器 (2- Realtek(R) Audio)
+  Name: Speakers (2- Realtek(R) Audio)
   Output Channels: 2
 
 Device Index: 25
-  Name: 扬声器 (2- Realtek(R) Audio)
+  Name: Speakers (2- Realtek(R) Audio)
   Host API: Windows WASAPI
 ```
 
-### 设备选择建议
+### Device Selection Tips
 
-1. **优先使用 WASAPI 设备**（索引通常 22-27）- 低延迟
-2. **DirectSound 设备**（索引通常 15-21）- 兼容性好
-3. **留空使用系统默认** - 自动选择，最省心
+1. **Prefer WASAPI devices** (indexes are typically 22-27) - low latency
+2. **DirectSound devices** (indexes are typically 15-21) - good compatibility
+3. **Leave blank to use the system default** - automatic selection, hassle-free
 
 ---
 
-## 常见问题
+## FAQ
 
-### Q1: 没有声音
+### Q1: No sound
 
-**排查步骤**:
+**Troubleshooting steps**:
 
-1. 查看启动日志：
+1. Check the startup log:
 
    ```
-   [VirtualCam Audio] Using default output device: 扬声器 (index 25)
+   [VirtualCam Audio] Using default output device: Speakers (index 25)
    ```
-2. 检查设备索引是否是输出设备：
+2. Verify that the device index refers to an output device:
 
    ```bash
    python list_audio_devices.py
    ```
-3. 手动指定音频设备：
+3. Manually specify the audio device:
 
    ```bash
    python app.py --transport virtualcam --audio_output_device 25
    ```
-4. 确认 TTS 正常工作（日志有 `doubao tts Time to first chunk`）
+4. Confirm the TTS is working (the log contains `doubao tts Time to first chunk`)
 
-### Q2: 画面颜色偏蓝
+### Q2: The picture has a blue tint
 
-**已修复**: 代码自动转换 BGR → RGB
+**Fixed**: the code automatically converts BGR → RGB
 
 ### Q3: RuntimeError: virtual camera output could not be started
 
-**原因**: 虚拟摄像头设备未注册或未激活
+**Cause**: the virtual camera device is not registered or activated
 
-**解决步骤**:
+**Resolution steps**:
 
-1. 确认已安装 OBS Studio: https://obsproject.com/
-2. **首次使用必须启动 OBS Studio 一次**
-   - 打开 OBS Studio
-   - 关闭 OBS（设备已激活）
-3. 验证设备已注册:
+1. Confirm OBS Studio is installed: https://obsproject.com/
+2. **You must launch OBS Studio once before first use**
+   - Open OBS Studio
+   - Close OBS (the device is now activated)
+3. Verify the device is registered:
    ```python
    import pyvirtualcam
    cam = pyvirtualcam.Camera(width=640, height=480, fps=30)
-   print(cam.device)  # 应输出: OBS Virtual Camera
+   print(cam.device)  # Should print: OBS Virtual Camera
    ```
-4. 之后无需打开 OBS，设备自动可用
+4. After that, OBS does not need to be open; the device is available automatically
 
 ### Q4: ModuleNotFoundError: No module named 'pyaudio'
 
 ```bash
 pip install pyaudio
-# 或
+# or
 pip install pipwin && pipwin install pyaudio
 ```
 
@@ -266,76 +266,76 @@ pip install pipwin && pipwin install pyaudio
 pip install pyvirtualcam
 ```
 
-### Q6: 如何确认虚拟摄像头正常工作？
+### Q6: How do I confirm the virtual camera is working?
 
-1. 启动日志检查：
+1. Check the startup log:
 
    ```
    VirtualCam output started: OBS Virtual Camera with resolution 1280x720
    ```
-2. OBS 中验证：
+2. Verify in OBS:
 
-   - 添加"视频捕获设备"
-   - 选择"OBS Virtual Camera"
-   - 应该能看到数字人画面
-3. 发送测试：
+   - Add a "Video Capture Device"
+   - Select "OBS Virtual Camera"
+   - You should see the digital human video
+3. Send a test request:
 
    ```bash
-   curl -X POST http://localhost:8010/human -H "Content-Type: application/json" -d '{"sessionid":"0","type":"echo","text":"测试"}'
+   curl -X POST http://localhost:8010/human -H "Content-Type: application/json" -d '{"sessionid":"0","type":"echo","text":"Test"}'
    ```
 
-### Q7: 音频延迟严重
+### Q7: Severe audio latency
 
-**优化**:
+**Optimizations**:
 
-1. 使用 WASAPI 设备（低延迟）
-2. 关闭其他音频应用
-3. 检查 CPU 占用率
+1. Use a WASAPI device (low latency)
+2. Close other audio applications
+3. Check CPU usage
 
 ---
 
-## 技术架构
+## Technical Architecture
 
-### 渲染流程
+### Rendering Pipeline
 
 ```
 app.py
-  └─> 创建 Session 0
-      └─> render() 线程
-          └─> inference() 生成帧
-              └─> process_frames() 推送帧
+  └─> Create Session 0
+      └─> render() thread
+          └─> inference() generates frames
+              └─> process_frames() pushes frames
                   └─> virtualcam.py
-                      ├─> 视频: BGR→RGB → pyvirtualcam
-                      └─> 音频: PyAudio → 扬声器
+                      ├─> Video: BGR→RGB → pyvirtualcam
+                      └─> Audio: PyAudio → speakers
 ```
 
-### API 接口
+### API Endpoints
 
-| 接口                       | 方法 | 功能         |
-| -------------------------- | ---- | ------------ |
-| `/human`                 | POST | 发送文本     |
-| `/interrupt_talk`        | POST | 打断说话     |
-| `/is_speaking`           | POST | 查询说话状态 |
+| Endpoint                   | Method | Function               |
+| -------------------------- | ------ | ---------------------- |
+| `/human`                 | POST   | Send text              |
+| `/interrupt_talk`        | POST   | Interrupt speech       |
+| `/is_speaking`           | POST   | Query speaking status  |
 
-### 关键文件
+### Key Files
 
-| 文件                        | 作用             |
-| --------------------------- | ---------------- |
-| `config.py`               | 命令行参数定义   |
-| `app.py`                  | 启动逻辑         |
-| `base_avatar.py`          | 渲染线程         |
-| `streamout/virtualcam.py` | 虚拟摄像头输出   |
-| `web/virtualcam.html`     | Web 控制页面     |
-| `list_audio_devices.py`   | 音频设备查询工具 |
+| File                        | Role                          |
+| --------------------------- | ----------------------------- |
+| `config.py`               | Command-line argument definitions |
+| `app.py`                  | Startup logic                 |
+| `base_avatar.py`          | Rendering thread              |
+| `streamout/virtualcam.py` | Virtual camera output         |
+| `web/virtualcam.html`     | Web control page              |
+| `list_audio_devices.py`   | Audio device listing tool     |
 
 ---
 
-## 总结
+## Summary
 
-虚拟摄像头功能现已完整实现，支持：
+The virtual camera feature is now fully implemented, supporting:
 
-✅ **核心功能** - 自动音频检测、颜色修复、后台渲染  
-✅ **易用性** - Web 控制台、HTTP API、交互式操作  
-✅ **稳定性** - 独立线程、异常处理、资源管理  
+✅ **Core features** - automatic audio detection, color correction, background rendering  
+✅ **Ease of use** - web console, HTTP API, interactive controls  
+✅ **Stability** - dedicated thread, exception handling, resource management  
 
-现在可以轻松将数字人推流到 Zoom、Teams、OBS 等应用！
+You can now easily stream your digital human into Zoom, Teams, OBS, and other applications!
